@@ -1,0 +1,8 @@
+img { 
+    height: 100px;
+}
+
+.selected { 
+    border: 1px solid yellow;
+}
+

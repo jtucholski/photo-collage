@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css">
+    <title></title>
+    <script src="scripts/hotspot.js"></script>
+
+
+    <script type="text/javascript">
+        var imageObjects = [];
+        // The hotspot is 200 x 200 and at 50,50
+        // 100 x 160 at  7,368
+        var hotspots = [
+            new Hotspot(165, 105, 7, 368),
+            new Hotspot(165, 105, 7, 970),
+            new Hotspot(165, 105, 187, 728),
+            new Hotspot(165, 230, 368, 485),
+            new Hotspot(165, 105, 365, 846),
+            new Hotspot(165, 105, 546, 368),
+        ];
+        var hotspot = null;
+
+
+        $(function () {
+            // Multiple images preview in browser
+            var imagesPreview = function (input, placeToInsertImagePreview) {
+
+                if (input.files) {
+                    var filesAmount = input.files.length;
+
+                    for (i = 0; i < filesAmount; i++) {
+                        var reader = new FileReader();
+
+                        reader.onload = function (event) {
+                            var image = $($.parseHTML('<img>'));
+                            image.attr('src', event.target.result);
+
+                            image.appendTo(placeToInsertImagePreview);
+                            image.on('click', handleImageSelect);                            
+                        }
+
+                        reader.readAsDataURL(input.files[i]);
+                    }
+                }
+
+            };
+
+            $('#imageselector').on('change', function () {
+                imagesPreview(this, '#image-container');
+            });
+
+
+            var image = new Image();
+            image.onload = function () {
+                var canvas = document.getElementById('simple-demo');
+                var context = canvas.getContext('2d');
+                context.drawImage(this, 0, 0);
+                canvas.addEventListener('click', selectHotspot);
+            }
+            image.src = 'resources/panel-1.jpg';
+
+            window.addEventListener('keydown', handleKeyPress, false);
+
+        });
+
+        function selectHotspot(event) {
+
+            var rect = this.getBoundingClientRect();
+            var x = event.clientX - rect.left;
+            var y = event.clientY - rect.top;
+
+            for (var i = 0; i < hotspots.length; i++) {
+                if (hotspots[i].containsCoordinate(x, y)) {
+                    hotspot = hotspots[i];
+                    return;
+                }
+            }
+        }
+
+        function handleImageSelect() {
+            hotspot.setImage(this);
+
+            var context = document.getElementById('simple-demo').getContext('2d');
+            context.drawImage(this, 0, 0, hotspot.width, hotspot.height, hotspot.x, hotspot.y, hotspot.width, hotspot.height);
+        }
+
+        function handleKeyPress(e) {
+            var keys = ["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown", "-", "+"];
+
+            e.preventDefault();
+
+            if (!keys.includes(e.key)) {
+                return true;
+            }
+
+            var context = document.getElementById('simple-demo').getContext('2d');
+            const ShiftAmount = 10;
+
+            if (e.key === "ArrowLeft") { //left
+                hotspot.image.offsetX -= ShiftAmount;
+            }
+            else if (e.key === "ArrowUp") {  //up
+                hotspot.image.offsetY -= ShiftAmount;
+            }
+            else if (e.key === "ArrowRight") { //right
+                hotspot.image.offsetX += ShiftAmount;
+            }
+            else if (e.key === "ArrowDown") {  //down
+                hotspot.image.offsetY += ShiftAmount;
+            }
+            else if (e.key === "-") { // minus
+                hotspot.image.zoom += 0.05;
+            }
+            else if (e.key === "+") {
+                hotspot.image.zoom -= 0.05;
+            }
+
+            context.drawImage(hotspot.image,
+                hotspot.image.offsetX, hotspot.image.offsetY, hotspot.width + (hotspot.image.zoom * hotspot.width), hotspot.height + (hotspot.image.zoom * hotspot.height),
+                hotspot.x, hotspot.y, hotspot.width, hotspot.height);
+
+            return false;
+        }
+    </script>
+
+</head>
+
+<body>
+    <input id="imageselector" type="file" multiple>
+    <div id="image-container">
+
+    </div>
+    <canvas id="simple-demo" width="720" height="1440" style="background-color: gray;">
+
+    </canvas>
+
+
+</body>
+
+</html>
