@@ -2,14 +2,18 @@
 <html lang="en">
 
 <head>
+    <title></title>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-        crossorigin="anonymous"></script>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="stylesheet" href="style.css">
-    <title></title>
+
+    <script src="scripts/jquery-3.2.1.min.js"></script>
+    <script src="scripts/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
+    <script src="scripts/fabric.min.js"></script>
     <script src="scripts/hotspot.js"></script>
+    <script src="scripts/hotspot-canvas.js"></script>
 
 
     <script type="text/javascript">
@@ -18,14 +22,13 @@
         // 100 x 160 at  7,368
         var hotspots = [
             new Hotspot(165, 105, 7, 368),
-            new Hotspot(165, 105, 7, 970),
+            new Hotspot(165, 105, 7, 968),
             new Hotspot(165, 105, 187, 728),
             new Hotspot(165, 230, 368, 485),
-            new Hotspot(165, 105, 365, 846),
-            new Hotspot(165, 105, 546, 368),
+            new Hotspot(165, 105, 368, 847),
+            new Hotspot(165, 105, 547, 368),
         ];
-        var hotspot = null;
-
+        
 
         $(function () {
             // Multiple images preview in browser
@@ -42,45 +45,68 @@
                             image.attr('src', event.target.result);
 
                             image.appendTo(placeToInsertImagePreview);
-                            image.on('click', handleImageSelect);                            
+                            image.on('click', function(i) { 
+                                hotspotCanvas.addImage(this.src);
+                            });
                         }
 
                         reader.readAsDataURL(input.files[i]);
                     }
                 }
-
             };
 
             $('#imageselector').on('change', function () {
+                hotspotCanvas.enableHotspots(true);
                 imagesPreview(this, '#image-container');
             });
 
 
-            var image = new Image();
-            image.onload = function () {
-                var canvas = document.getElementById('simple-demo');
-                var context = canvas.getContext('2d');
-                context.drawImage(this, 0, 0);
-                canvas.addEventListener('click', selectHotspot);
-            }
-            image.src = 'resources/panel-1.jpg';
+            var hotspotCanvas = new HotspotCanvas(hotspots, 'simple-demo', 'resources/panel-1.jpg');
 
-            window.addEventListener('keydown', handleKeyPress, false);
+
+            
+            
+            // var image = new Image();
+            // image.onload = function () {
+            //     var canvas = document.getElementById('simple-demo');
+            //     var context = canvas.getContext('2d');
+            //     context.drawImage(this, 0, 0);
+            //     canvas.addEventListener('click', selectHotspot);
+            // }
+            // image.src = 'resources/panel-1.jpg';
+
+            //window.addEventListener('keydown', handleKeyPress, false);
+            // var canvas = document.getElementById('simple-demo');
+            // var canvas_hammer = new Hammer(canvas);
+            // canvas_hammer.on('pan', function (e) {
+
+            //     var target_hotspot = getHotspotAtCoordinate(e.center);
+            //     if (target_hotspot !== null) {
+            //         translateHotspot(target_hotspot, e.deltaX, e.deltaY);                    
+            //     }
+
+            // })
 
         });
 
-        function selectHotspot(event) {
 
+
+        function getHotspotAtCoordinate(coordinate) {
+            for (var i = 0; i < hotspots.length; i++) {
+                if (hotspots[i].containsCoordinate(coordinate.x, coordinate.y)) {
+                    return hotspots[i];
+                }
+            }
+
+            return null;
+        }
+
+        function selectHotspot(event) {
             var rect = this.getBoundingClientRect();
             var x = event.clientX - rect.left;
             var y = event.clientY - rect.top;
 
-            for (var i = 0; i < hotspots.length; i++) {
-                if (hotspots[i].containsCoordinate(x, y)) {
-                    hotspot = hotspots[i];
-                    return;
-                }
-            }
+            hotspot = getHotspotAtCoordinate({ x: x, y: y });
         }
 
         function handleImageSelect() {
@@ -88,6 +114,26 @@
 
             var context = document.getElementById('simple-demo').getContext('2d');
             context.drawImage(this, 0, 0, hotspot.width, hotspot.height, hotspot.x, hotspot.y, hotspot.width, hotspot.height);
+        }
+
+        function translateHotspot(panned_hotspot, deltaX, deltaY) {
+            var context = document.getElementById('simple-demo').getContext('2d');
+
+            panned_hotspot.image.offsetX += deltaX;
+
+            if (panned_hotspot.image.offsetX < 0) { 
+                panned_hotspot.image.offsetX = 0;
+            }
+
+            panned_hotspot.image.offsetY += deltaY;
+
+            if (panned_hotspot.image.offsetY < 0) { 
+                panned_hotspot.image.offsetY = 0;
+            }
+
+            context.drawImage(panned_hotspot.image,
+                panned_hotspot.image.offsetX, panned_hotspot.image.offsetY, panned_hotspot.width + (panned_hotspot.image.zoom * panned_hotspot.width), panned_hotspot.height + (panned_hotspot.image.zoom * panned_hotspot.height),
+                panned_hotspot.x, panned_hotspot.y, panned_hotspot.width, panned_hotspot.height);
         }
 
         function handleKeyPress(e) {
@@ -133,10 +179,12 @@
 
 <body>
     <input id="imageselector" type="file" multiple>
+    <a id="toImage" href="#">To Image</a>
+    <a id="downloadLink" download="canvas.png" target="_blank">to download</a>
     <div id="image-container">
 
     </div>
-    <canvas id="simple-demo" width="720" height="1440" style="background-color: gray;">
+    <canvas id="simple-demo" width="720" height="1440" >
 
     </canvas>
 
