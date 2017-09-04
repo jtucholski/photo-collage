@@ -1,13 +1,23 @@
 HotspotCanvas = function (hotspots, canvas_id, backgroundImage) {
-    this.hotspots = hotspots;
+
     this.canvas = new fabric.Canvas(canvas_id);
 
     this.setBackground(backgroundImage);
-    this.setHotspots();
+    this.setHotspots(hotspots);
     this.setEventHandlers();
+
+    this.selectedPhotoUrl = null;
 }
 
 HotspotCanvas.prototype = {
+
+    getSelectedPhotoUrl: function () {
+        return this.selectedPhotoUrl;
+    },
+
+    setSelectedPhotoUrl: function (url) {
+        this.selectedPhotoUrl = url;
+    },
 
     setBackground: function (backgroundImage) {
         this.addImage(backgroundImage, { selectable: false }, function (img) {
@@ -20,8 +30,41 @@ HotspotCanvas.prototype = {
         var objects = this.canvas.getObjects('rect');
         objects.forEach(function (rect) {
             rect.on('mouseup', function () {
+
+
                 if (_this.enabled) {
-                    console.log('yes');
+                    var _hotspotRect = this;
+
+                    _this.addImage(_this.selectedPhotoUrl,
+                        {
+                            originX: 'left',
+                            originY: 'top',
+                            lockUniScaling: true,
+                            lockRotation: true,
+                            left: _hotspotRect.hotspot.x,
+                            top: _hotspotRect.hotspot.y,
+                            clipTo: function (ctx) {
+                                var retina = _this.canvas.getRetinaScaling();
+                                ctx.save();
+                                ctx.setTransform(retina, 0, 0, retina, 0, 0);
+                                ctx.rect(
+                                    _hotspotRect.left,
+                                    _hotspotRect.top,
+                                    _hotspotRect.width,
+                                    _hotspotRect.height);
+                                ctx.restore();
+                            }
+                        }, function (img) {
+
+                            if (_hotspotRect.width > _hotspotRect.height) {
+                                img.scaleToWidth(_hotspotRect.width);
+                            }
+                            else {
+                                img.scaleToHeight(_hotspotRect.height);
+                            }
+
+                        });
+
                     _this.enableHotspots(false);
                 }
             }, this);
@@ -29,9 +72,9 @@ HotspotCanvas.prototype = {
 
     },
 
-    setHotspots: function () {
-        for (var i = 0; i < this.hotspots.length; i++) {
-            var hotspot = this.hotspots[i];
+    setHotspots: function (hotspots) {
+        for (var i = 0; i < hotspots.length; i++) {
+            var hotspot = hotspots[i];
             var clipSpot = new fabric.Rect({
                 originX: 'left',
                 originY: 'top',
@@ -39,6 +82,8 @@ HotspotCanvas.prototype = {
                 top: hotspot.y,
                 height: hotspot.height,
                 width: hotspot.width,
+                // height: hotspot.height,
+                // width: hotspot.width,
                 fill: 'transparent',
                 stroke: '#000',
                 strokeWidth: 0,
@@ -46,7 +91,7 @@ HotspotCanvas.prototype = {
             });
 
             this.canvas.add(clipSpot);
-            hotspot.clip = clipSpot;
+            clipSpot.hotspot = hotspot;
         }
     },
 
@@ -59,11 +104,18 @@ HotspotCanvas.prototype = {
     addImage: function (imageUrl, properties, callback) {
         var _this = this;
         fabric.Image.fromURL(imageUrl, function (img) {
-            _this.canvas.add(img);
-            for (var p in properties) {
-                img.set(p, properties[p]);
+
+            if (properties !== undefined) {
+                for (var p in properties) {
+                    img.set(p, properties[p]);
+                }
             }
-            callback(img);
+
+            _this.canvas.add(img);
+
+            if (callback !== undefined) {
+                callback(img);
+            }
         });
     },
 
@@ -77,10 +129,12 @@ HotspotCanvas.prototype = {
 
         this.enabled = shouldEnable;
 
-        for (var i = 0; i < this.hotspots.length; i++) {
-            this.hotspots[i].clip.set('strokeWidth', strokeWidth);
-            this.hotspots[i].clip.bringToFront();            
-        }
+        var objects = this.canvas.getObjects('rect');
+        objects.forEach(function (rect) {
+            rect.set('strokeWidth', strokeWidth);
+            rect.bringToFront();
+        }, this);
+
     }
 
 }

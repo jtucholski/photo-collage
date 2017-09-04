@@ -28,7 +28,7 @@
             new Hotspot(165, 105, 368, 847),
             new Hotspot(165, 105, 547, 368),
         ];
-        
+
 
         $(function () {
             // Multiple images preview in browser
@@ -45,7 +45,7 @@
                             image.attr('src', event.target.result);
 
                             image.appendTo(placeToInsertImagePreview);
-                            image.on('click', function(i) { 
+                            image.on('click', function (i) {
                                 hotspotCanvas.addImage(this.src);
                             });
                         }
@@ -57,35 +57,36 @@
 
             $('#imageselector').on('change', function () {
                 hotspotCanvas.enableHotspots(true);
-                imagesPreview(this, '#image-container');
+
+                if (this.files) {
+                    var reader = new FileReader();
+                    reader.onload = function (event) {
+                        hotspotCanvas.setSelectedPhotoUrl(event.target.result);
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+
             });
 
 
             var hotspotCanvas = new HotspotCanvas(hotspots, 'simple-demo', 'resources/panel-1.jpg');
 
+            $("#download").on("click", function () {
+                var link = document.createElement("a");
+                var imgData = hotspotCanvas.canvas.toDataURL({
+                    format: 'png',
+                    multiplier: 4
+                });
+                var strDataURI = imgData.substr(22, imgData.length);
+                var blob = dataURLtoBlob(imgData);
+                var objurl = URL.createObjectURL(blob);
 
-            
-            
-            // var image = new Image();
-            // image.onload = function () {
-            //     var canvas = document.getElementById('simple-demo');
-            //     var context = canvas.getContext('2d');
-            //     context.drawImage(this, 0, 0);
-            //     canvas.addEventListener('click', selectHotspot);
-            // }
-            // image.src = 'resources/panel-1.jpg';
+                link.download = "helloWorld.png";
 
-            //window.addEventListener('keydown', handleKeyPress, false);
-            // var canvas = document.getElementById('simple-demo');
-            // var canvas_hammer = new Hammer(canvas);
-            // canvas_hammer.on('pan', function (e) {
+                link.href = objurl;
 
-            //     var target_hotspot = getHotspotAtCoordinate(e.center);
-            //     if (target_hotspot !== null) {
-            //         translateHotspot(target_hotspot, e.deltaX, e.deltaY);                    
-            //     }
-
-            // })
+                link.click();
+            });
 
         });
 
@@ -109,82 +110,24 @@
             hotspot = getHotspotAtCoordinate({ x: x, y: y });
         }
 
-        function handleImageSelect() {
-            hotspot.setImage(this);
 
-            var context = document.getElementById('simple-demo').getContext('2d');
-            context.drawImage(this, 0, 0, hotspot.width, hotspot.height, hotspot.x, hotspot.y, hotspot.width, hotspot.height);
-        }
-
-        function translateHotspot(panned_hotspot, deltaX, deltaY) {
-            var context = document.getElementById('simple-demo').getContext('2d');
-
-            panned_hotspot.image.offsetX += deltaX;
-
-            if (panned_hotspot.image.offsetX < 0) { 
-                panned_hotspot.image.offsetX = 0;
+        function dataURLtoBlob(dataurl) {
+            var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
             }
-
-            panned_hotspot.image.offsetY += deltaY;
-
-            if (panned_hotspot.image.offsetY < 0) { 
-                panned_hotspot.image.offsetY = 0;
-            }
-
-            context.drawImage(panned_hotspot.image,
-                panned_hotspot.image.offsetX, panned_hotspot.image.offsetY, panned_hotspot.width + (panned_hotspot.image.zoom * panned_hotspot.width), panned_hotspot.height + (panned_hotspot.image.zoom * panned_hotspot.height),
-                panned_hotspot.x, panned_hotspot.y, panned_hotspot.width, panned_hotspot.height);
-        }
-
-        function handleKeyPress(e) {
-            var keys = ["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown", "-", "+"];
-
-            e.preventDefault();
-
-            if (!keys.includes(e.key)) {
-                return true;
-            }
-
-            var context = document.getElementById('simple-demo').getContext('2d');
-            const ShiftAmount = 10;
-
-            if (e.key === "ArrowLeft") { //left
-                hotspot.image.offsetX -= ShiftAmount;
-            }
-            else if (e.key === "ArrowUp") {  //up
-                hotspot.image.offsetY -= ShiftAmount;
-            }
-            else if (e.key === "ArrowRight") { //right
-                hotspot.image.offsetX += ShiftAmount;
-            }
-            else if (e.key === "ArrowDown") {  //down
-                hotspot.image.offsetY += ShiftAmount;
-            }
-            else if (e.key === "-") { // minus
-                hotspot.image.zoom += 0.05;
-            }
-            else if (e.key === "+") {
-                hotspot.image.zoom -= 0.05;
-            }
-
-            context.drawImage(hotspot.image,
-                hotspot.image.offsetX, hotspot.image.offsetY, hotspot.width + (hotspot.image.zoom * hotspot.width), hotspot.height + (hotspot.image.zoom * hotspot.height),
-                hotspot.x, hotspot.y, hotspot.width, hotspot.height);
-
-            return false;
+            return new Blob([u8arr], { type: mime });
         }
     </script>
 
 </head>
 
 <body>
-    <input id="imageselector" type="file" multiple>
-    <a id="toImage" href="#">To Image</a>
-    <a id="downloadLink" download="canvas.png" target="_blank">to download</a>
-    <div id="image-container">
+    <input id="imageselector" type="file">
+    <button id="download">download</button>
 
-    </div>
-    <canvas id="simple-demo" width="720" height="1440" >
+    <canvas id="simple-demo" width="720" height="1440">
 
     </canvas>
 
