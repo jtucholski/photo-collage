@@ -1,8 +1,35 @@
-img { 
-    height: 100px;
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
 }
 
-.selected { 
-    border: 1px solid yellow;
+#top-bar { 
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 45px;
+    padding: 5px;
+    background-color: #fff;
+    border-bottom: 2px solid #000;
+    z-index: 9999;
 }
 
+canvas { 
+    margin-top: 44px;
+}

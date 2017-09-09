@@ -6,9 +6,22 @@
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
     <link rel="stylesheet" href="style.css">
 
+
+
+
+
     <script src="scripts/jquery-3.2.1.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <!-- <script src="scripts/exif.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-load-image/2.17.0/load-image.all.min.js"></script>
     <script src="scripts/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
     <script src="scripts/fabric.min.js"></script>
@@ -31,84 +44,36 @@
 
 
         $(function () {
-            // Multiple images preview in browser
-            var imagesPreview = function (input, placeToInsertImagePreview) {
 
-                if (input.files) {
-                    var filesAmount = input.files.length;
+            
 
-                    for (i = 0; i < filesAmount; i++) {
-                        var reader = new FileReader();
+            // $('#imageselector').on('change', function () {
+            //     hotspotCanvas.enableHotspots(true);
 
-                        reader.onload = function (event) {
-                            var image = $($.parseHTML('<img>'));
-                            image.attr('src', event.target.result);
+            //     if (this.files) {
+            //         var reader = new FileReader();
+            //         reader.onload = function (event) {
+            //             hotspotCanvas.setSelectedPhotoUrl(event.target.result);
+            //         }
+            //         reader.readAsDataURL(this.files[0]);
+            //     }
 
-                            image.appendTo(placeToInsertImagePreview);
-                            image.on('click', function (i) {
-                                hotspotCanvas.addImage(this.src);
-                            });
-                        }
+            // });
 
-                        reader.readAsDataURL(input.files[i]);
-                    }
+
+            var hotspotCanvas = new HotspotCanvas(hotspots, 'simple-demo', 'resources/panel-1.jpg', function(msg) { 
+                $("#instructions").text(`${msg.hotspotsRemaining} panels remaining`);
+
+                if (msg.hotspotsRemaining > 0) {                     
+                    $("#download").show();
                 }
-            };
-
-            $('#imageselector').on('change', function () {
-                hotspotCanvas.enableHotspots(true);
-
-                if (this.files) {
-                    var reader = new FileReader();
-                    reader.onload = function (event) {
-                        hotspotCanvas.setSelectedPhotoUrl(event.target.result);
-                    }
-                    reader.readAsDataURL(this.files[0]);
-                }
-
             });
 
-
-            var hotspotCanvas = new HotspotCanvas(hotspots, 'simple-demo', 'resources/panel-1.jpg');
-
             $("#download").on("click", function () {
-                var link = document.createElement("a");
-                var imgData = hotspotCanvas.canvas.toDataURL({
-                    format: 'png',
-                    multiplier: 4
-                });
-                var strDataURI = imgData.substr(22, imgData.length);
-                var blob = dataURLtoBlob(imgData);
-                var objurl = URL.createObjectURL(blob);
-
-                link.download = "helloWorld.png";
-
-                link.href = objurl;
-
-                link.click();
+                hotspotCanvas.downloadCanvas();
             });
 
         });
-
-
-
-        function getHotspotAtCoordinate(coordinate) {
-            for (var i = 0; i < hotspots.length; i++) {
-                if (hotspots[i].containsCoordinate(coordinate.x, coordinate.y)) {
-                    return hotspots[i];
-                }
-            }
-
-            return null;
-        }
-
-        function selectHotspot(event) {
-            var rect = this.getBoundingClientRect();
-            var x = event.clientX - rect.left;
-            var y = event.clientY - rect.top;
-
-            hotspot = getHotspotAtCoordinate({ x: x, y: y });
-        }
 
 
         function dataURLtoBlob(dataurl) {
@@ -124,8 +89,20 @@
 </head>
 
 <body>
-    <input id="imageselector" type="file">
-    <button id="download">download</button>
+
+    <div id="top-bar">
+        
+         
+             <input id="imageselector" type="file" style="display: none;">
+        
+
+
+        <label id="instructions">6 panels remaining</label>
+
+
+        <button class="btn btn-success" id="download" style="display: none;">Download</button>
+        <span>v0.1</span>
+    </div>
 
     <canvas id="simple-demo" width="720" height="1440">
 
