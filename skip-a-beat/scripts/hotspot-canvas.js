@@ -40,8 +40,11 @@ HotspotCanvas.prototype = {
 
     downloadCanvas: function () {
 
+        //console.log(this.canvas.getActiveObject());
+        this.canvas.discardActiveObject().renderAll();
+
         const downloadFileName = "skip-a-beat.png";
-        const multiplier = 3;
+        const multiplier = 1;
 
         // Convert a dataUrl object to a binary object
         var dataURLtoBlob = function (dataurl) {
@@ -111,6 +114,7 @@ HotspotCanvas.prototype = {
             if (this.files) {
                 var reader = new FileReader();
                 reader.onload = function (e) {
+                    _this.setClipSpotVisibility(_this._rect, false);                    
                     _this.addImageToHotspot(_this._rect, e.target.result);
                     _this.eventCallback({
                         hotspotsRemaining: _this.getHotspotsWithoutImages(),
@@ -124,6 +128,10 @@ HotspotCanvas.prototype = {
     },
 
 
+    setClipSpotVisibility: function(clipSpot, isVisible) {
+        clipSpot.visible = isVisible;
+        clipSpot.plus.visible = isVisible;
+    },
 
 
     setHotspots: function (hotspots) {
@@ -167,7 +175,7 @@ HotspotCanvas.prototype = {
                     imageSelector.click();
                 }.bind(this));
 
-
+                this.plus = img;
 
                 _this.canvas.add(img);
             }.bind(clipSpot));
