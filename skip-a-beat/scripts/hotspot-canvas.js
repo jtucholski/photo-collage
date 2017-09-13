@@ -41,6 +41,7 @@ HotspotCanvas.prototype = {
     downloadCanvas: function () {
 
         const downloadFileName = "skip-a-beat.png";
+        const multiplier = 3;
 
         // Convert a dataUrl object to a binary object
         var dataURLtoBlob = function (dataurl) {
@@ -52,18 +53,23 @@ HotspotCanvas.prototype = {
             return new Blob([u8arr], { type: mime });
         }
 
-        // Get the Object Url
-        var imgData = this.canvas.toDataURL({
-            format: 'png',
-            multiplier: 4
-        });
+        // Extract it from Fabric
+        var canvasEl = this.canvas.wrapperEl.childNodes[0];
+        var big = document.createElement("canvas");
+        big.width = canvasEl.width * multiplier;
+        big.height = canvasEl.height * multiplier;
+        var ctx = big.getContext('2d');
+        ctx.drawImage(canvasEl, 0, 0, big.width, big.height)
+        var imgData = big.toDataURL("image/png");
+
+        // Get the Object Url        
         var strDataURI = imgData.substr(22, imgData.length);
         var blob = dataURLtoBlob(imgData);
         var objurl = URL.createObjectURL(blob);
 
-        // Bind the Object Url to <a> and click
+        // Bind the Object Url to <a> and click for the user
         var link = document.createElement("a");
-        link.download = "helloWorld.png";
+        link.download = downloadFileName;
         link.href = objurl;
         link.click();
 
@@ -143,8 +149,8 @@ HotspotCanvas.prototype = {
             this.canvas.add(clipSpot);
             clipSpot.hotspot = hotspot;
 
-            fabric.Image.fromURL('resources/plus.png', function(img) {                 
-                
+            fabric.Image.fromURL('resources/plus.png', function (img) {
+
                 img.set({
                     originX: 'left',
                     originY: 'top',
@@ -155,18 +161,18 @@ HotspotCanvas.prototype = {
                     selectable: false,
                 });
 
-                img.on("mouseup", function(e) { 
+                img.on("mouseup", function (e) {
                     _this._rect = this;
                     var imageSelector = $("#imageselector");
                     imageSelector.click();
                 }.bind(this));
-                
-                
+
+
 
                 _this.canvas.add(img);
             }.bind(clipSpot));
 
-            
+
         }
 
 
@@ -187,6 +193,7 @@ HotspotCanvas.prototype = {
             }
 
             this.canvas.add(image);
+
 
             if (callback !== undefined) {
                 callback(image);
